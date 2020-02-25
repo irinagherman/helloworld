@@ -1,0 +1,35 @@
+steps:
+# This step builds the container image.
+- name: 'gcr.io/cloud-builders/docker'
+ id: Build
+ args:
+ - 'build'
+ - '-t'
+ - 'gcr.io/cirrus-initial-project/hello-world-ig:latest'
+ - 'src/'
+# This step pushes the image to Container Registry
+# The PROJECT_ID and SHORT_SHA variables are automatically
+# replaced by Cloud Build.
+- name: 'gcr.io/cloud-builders/docker'
+ id: Push
+ args:
+ - 'push'
+ - 'gcr.io/cirrus-initial-project/hello-world-ig:latest'
+- name: 'gcr.io/cloud-builders/kubectl'
+ id: Deploy
+ args:
+ - 'apply'
+ - '-f'
+ - 'helloworld.yaml'
+ env:
+ - 'CLOUDSDK_COMPUTE_ZONE=europe-west1-b'
+ - 'CLOUDSDK_CONTAINER_CLUSTER=istio-cluster'
+- name: 'gcr.io/cloud-builders/kubectl'
+ id: Fetch changes
+ args:
+ - 'rollout'
+ - 'restart'
+ - 'deployment/hello-world-ig'
+ env:
+ - 'CLOUDSDK_COMPUTE_ZONE=europe-west1-b'
+ - 'CLOUDSDK_CONTAINER_CLUSTER=istio-cluster'
